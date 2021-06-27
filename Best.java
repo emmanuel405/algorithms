@@ -20,109 +20,90 @@ public class Best {
      *    index 0 to 1 the value of sum = 6
      * @return ans = > [index start, index end, value]
      */
-    public static int[] Best(int start, int end ,int [] a) {
-        int ans [] = new int [3];
-        int sum = 0;
+	public static int[] Best(int [] a) {
+		int bestStart = 0, bestEnd = a.length;
+		int max = 0, tempMax = 0, tempStart = 0;
+		int ans [] = new int [3];
 
-        // I have only one number
-        if(start == end) {
-            ans[0] = ans[1] = start;
-            ans[2] = a[start];
-            return ans;
-        }
+		for (int i = 0; i < a.length; i++) {
+			tempMax += a[i];
+			if((tempMax > max) ||
+			   (tempMax == max && i - tempStart < bestEnd - bestStart)){
+				max = tempMax;
+				bestStart = tempStart;
+				bestEnd = i;
+			}
+			if(tempMax < 0){
+				tempMax = 0;
+				tempStart = i + 1;
+			}
+		}
 
-        if(a[start] >= 0) {
-            sum = a[start];
-            ans[0] = ans[1] = start;
-        }
+		ans[0] = bestStart;
+		ans[1] = bestEnd;
+		ans[2] = max;
+		return ans;
+	}
 
-        int help = sum;
-        int idx_min = -1;
-        for (int i = start + 1; i < end; i++) {
-            help += a[i];
+		/**
+	 *
+	 * @param a
+	 *
+	 * @example:
+	 *	  [7, -9, 2, 1]
+	 * @result:
+	 * 	  [2, 1, 10]
+	 *
+	 * @return ans = > [index start, index end, max]
+	 */
+	public static int[] BestCycle(int a[]) {
+		int neg[] = new int[a.length];
+		int sumAllNum = 0;
+		for (int i = 0; i < a.length; i++){
+			sumAllNum += a[i];
+			neg[i] = -1 * a[i];
+		}
+		int[] bestSimple = Best(a);
+		int[] bestNeg = Best(neg);
 
-            if(help <= 0) {
-                help = 0;
-                idx_min = i;
-            }
-            else {
-                if(sum == help) {
-                    if(ans[1] - ans[0] > i - idx_min + 1){
-                        ans[0] = idx_min + 1;
-                        ans[1] = i;
-                    }
-                }
-                else if(sum < help) {
-                    ans[0] = idx_min + 1;
-                    ans[1] = i;
-                    sum = help;
-                }
-            }
-        }
-        ans[2] = sum;
-        return ans;
-    }
+		int sumBest = bestSimple[2],
+		sumCycle = bestNeg[2] + sumAllNum,
+		sizeBest = bestSimple[1] - bestSimple[0] + 1, // end - start + 1
+		sizeCycle = a.length - (bestNeg[1] + bestNeg[0]) + 1; // end - start + 1
 
-    /**
-     *
-     * @param a
-     * same but know, we get an array and we looked him like circle.
-     * we put the array number in the diag if matrix
-     * if i<j:
-     * matrix[i][j] = matrix[j][j] + matrix[i][j-1]
-     *
-     * else: (i>j)
-     * ans[i,j] = all - ans[i-1,j+1]
-     * @example:
-     *	  [7, -9, 2, 1]
-     * @result:
-     * 	  []
-     *
-     *  7
-     *    -9
-     *        2
-     *           1
-     * @return ans
-     */
-    public static int[][] Best_circle(int a[]) {
-        int matrix[][] = new int[a.length][a.length];
-        int sumAllNum = 0;
-        for (int i = 0; i < a.length ; i++) {
-            matrix[i][i] = a[i];
-            sumAllNum += a[i];
-        }
-
-        // the up triangle
-        for(int i = 0; i < a.length; i++) {
-            for(int j = i; j < a.length; j++) {
-                if(i < j)
-                    matrix[i][j] = matrix[j][j] + matrix[i][j-1];
-            }
-        }
-
-        for (int i = 1; i < a.length; i++)
-            for (int j = 0; j < i; j++)
-                matrix[i][j] = sumAllNum - matrix[j][i-1];
-
-        return matrix;
-    }
-
+		int[] ans = new int[3];
+		if((sumBest > sumCycle) ||
+				(sumBest == sumCycle && sizeBest <= sizeCycle)){
+			ans[0] = bestSimple[0]; ans[1] = bestSimple[1];
+			int sum = 0;
+			for (int i = 0; i < sizeBest; i++)
+				sum += a[bestSimple[0] + i];
+			ans[2] = sum;
+		}
+		else{
+			ans[0] = bestNeg[1] + 1; ans[1] = bestNeg[0] - 1;
+			int sum = 0;
+			for (int i = 0; i < sizeCycle; i++)
+				sum += a[(bestNeg[1] + i + 1) % a.length];
+			ans[2] = sum;
+		}
+		return ans;
+	}
 
 /*
   public static void main(String[] args) {
- 		int [] arr = {7, -9, 2, 1};
-		int matrix[][] = Best_circle(arr);
-		for(int i=0; i<arr.length; i++)
-			System.out.println(Arrays.toString(matrix[i]));
+	int [] arr = {7,-7, 3, 9, -15, 2};
+	int [] ans = Best(arr);
+	System.out.println(Arrays.toString(ans));
 
-        int[][] matrix = {{2,1,-3,-4,5},{0,6,3,4,1},{2,-2,-1,4,-5},{-3,3,1,0,3}};
-        for(int i=0; i<matrix.length; i++)
-            System.out.println(Arrays.toString(matrix[i]));
+	int [] arr = {7, -9, 2, 1};
+	int res[] = BestCycle(arr);
+	System.out.println(Arrays.toString(res));
 
-        System.out.println("");
-        int[] ans = BigSubMatrix(matrix);
-        System.out.println(Arrays.toString(ans));
-
+	int [] arr1 = {7, -7, 1, -8, 1};
+	int res1[] = BestCycle(arr1);
+	System.out.println(Arrays.toString(res1));
+	
     }
 */
 }
